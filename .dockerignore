@@ -1,4 +1,3 @@
-# Python bytecode and artifacts
 **/__pycache__/
 **/*.py[cod]
 **/*.pyo
@@ -7,28 +6,23 @@
 **/dist/
 **/build/
 
-# Virtual environments
 **/.venv/
 **/venv/
 
-# Caches and test output
 **/.cache/
 **/.pytest_cache/
 **/.ruff_cache/
 **/coverage/
 
-# Logs and temp files
 **/*.log
 **/*.gz
 **/*.tgz
 **/.tmp
 **/.cache
 
-# Environment variables
 **/.env
 **/.env.*
 
-# VCS, editor, OS
 .git
 .gitignore
 .gitattributes
@@ -37,12 +31,36 @@
 .vscode/
 .DS_Store
 
-# Project docs and misc
 README.md
 LICENSE
 
-# Project tests
 test/
 tests/
 eval/
 evals/
+
+.env
+.env.local
+credentials.json
+*.key
+*.pem
+
+venv/
+__pycache__/
+*.pyc
+
+*.db
+*.sqlite
+*.sqlite3
+
+*.log
+*.tmp
+*.pid
+
+.git/
+.gitignore
+.vscode/
+.idea/
+
+*.wav
+*.mp3
