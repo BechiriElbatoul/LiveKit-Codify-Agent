@@ -1,0 +1,12 @@
+livekit
+livekit-agents[mcp]
+livekit-plugins-deepgram
+livekit-plugins-openai
+livekit-plugins-google
+livekit-plugins-assemblyai
+livekit-plugins-cartesia
+livekit-plugins-inworld
+livekit-plugins-silero
+livekit-plugins-turn-detector
+livekit-plugins-noise-cancellation
+python-dotenv
