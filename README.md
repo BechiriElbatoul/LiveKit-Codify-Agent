@@ -16,12 +16,11 @@ A voice AI agent for hospital patient intake, built with LiveKit. It collects pa
 1. **Clone the repo**
    ```bash
    git clone https://github.com/BechiriElbatoul/LiveKit-Codify-Agent.git
-   cd codify_agent_website
 
 2. **Create virtual environment**
     ```bash
     python3 -m venv venv
-    source venv/bin/activate  # or venv\Scripts\activate on Windows
+    source venv/bin/activate  
 
 3. **Install dependencies**
     ```bash
