@@ -1,6 +1,6 @@
 # Hospital Voice Agent
 
-A voice AI agent for hospital patient intake, built with LiveKit. It collects patient information, checks a services catalog (PDF), stores data locally (SQLite), and optionally pushes to Google Sheets.
+A voice AI agent for hospital patient intake, built with LiveKit. It collects patient information, checks a services catalog (PDF), stores data locally (SQLite), and pushes to Google Sheets.
 
 ##  Features
 
