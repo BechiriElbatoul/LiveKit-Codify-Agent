@@ -3,6 +3,8 @@ import os
 import sqlite3
 from datetime import datetime
 from dotenv import load_dotenv
+import asyncio
+import base64, json, os
 from livekit.agents import (
     Agent,
     AgentServer,
@@ -11,6 +13,7 @@ from livekit.agents import (
     RoomInputOptions,
     WorkerOptions,
     cli,
+    
 )
 from livekit.plugins import noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
@@ -88,6 +91,7 @@ def store_patient_intake(session_id: str, patient_data: dict):
     ))
     conn.commit()
     conn.close()
+    logger.info(f"✅ Patient saved to SQLite: {patient_data}")
 
 class CollectConsent(AgentTask[bool]):
     def __init__(self, chat_ctx=None):
@@ -118,7 +122,8 @@ class Manager(Agent):
         return Manager(chat_ctx=self.chat_ctx), "Escalating you to my manager now."
 
 class Assistant(Agent):
-    def __init__(self) -> None:
+    def __init__(self, job_id: str) -> None:
+        self.job_id = job_id
         catalog_text = load_hospital_catalog("hospital_catalog.pdf")
         instructions = f"""
         You are Sarah, a friendly and professional hospital intake assistant.
@@ -195,9 +200,13 @@ class Assistant(Agent):
             'medical_issue': medical_issue,
             'service_available': service_available
         }
-        session_id = context.session.id
+        session_id = self.job_id
         store_patient_intake(session_id, patient_data)
-        append_to_google_sheet(patient_data) 
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, append_to_google_sheet, patient_data)
+        except Exception as e:
+            logger.error(f"Google Sheets error (non-fatal): {e}")
         if service_available:
             await context.session.say(
                 "Thank you. I've noted all your details. A specialist from the relevant department will be in touch with you shortly. Is there anything else I can help you with today?"
@@ -207,13 +216,20 @@ class Assistant(Agent):
                 "Thank you for your patience. I have created a new case for you. Our case management team will review it and call you back at the number you provided within 24 hours. Is there anything else I can help you with?"
             )
 def append_to_google_sheet(patient_data: dict):
-    """Append one row to your Google Sheet."""
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds_b64 = os.environ["GCP_CREDENTIALS_B64"]
+    creds_dict = json.loads(base64.b64decode(creds_b64))
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(
+        creds_dict,
+        ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    )
     client = gspread.authorize(creds)
-
-    sheet = client.open("Hospital Intakes").sheet1
-
+    
+    try:
+        sheet = client.open("Hospital Intakes").sheet1
+    except gspread.SpreadsheetNotFound:
+        logger.error("❌ Spreadsheet 'Hospital Intakes' not found. Check the name exactly.")
+        raise
+    
     row = [
         patient_data.get('full_name', ''),
         patient_data.get('age', ''),
@@ -225,7 +241,7 @@ def append_to_google_sheet(patient_data: dict):
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ]
     sheet.append_row(row)
-    print(f"✅ Data appended to Google Sheet: {row}")
+    logger.info(f"✅ Data appended to Google Sheet: {row}")
 server = AgentServer()
 
 @server.rtc_session()
@@ -274,7 +290,7 @@ async def entrypoint(ctx: JobContext):
             logger.info("%.3f", elapsed)
 
     await session.start(
-        agent=Assistant(),
+        agent=Assistant(job_id=ctx.job.id),
         room=ctx.room,
         room_input_options=RoomInputOptions(
             noise_cancellation=noise_cancellation.BVC(),
