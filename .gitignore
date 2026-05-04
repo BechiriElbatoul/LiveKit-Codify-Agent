@@ -43,3 +43,4 @@ htmlcov/
 *.wav
 *.mp3
 *.raw
+node_modules
